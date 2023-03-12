@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
+
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -24,12 +25,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                 .antMatchers("/", "/index").permitAll()
+                .antMatchers("/user/**").hasAuthority("READ PROFILE")
+                .antMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
-                .and()
-                .formLogin().successHandler(successUserHandler)
+                .and()  // разделитель
+                //.formLogin().successHandler(successUserHandler)
+                .formLogin() // или httpBasic()
                 .permitAll()
                 .and()
-                .logout()
+                .logout().logoutSuccessUrl("/")
                 .permitAll();
     }
 
@@ -44,6 +48,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .roles("USER")
                         .build();
 
-        return new InMemoryUserDetailsManager(user);
+        UserDetails admin =
+                User.withDefaultPasswordEncoder()
+                        .username("admin")
+                        .password("admin")
+                        .roles("ADMIN", "USER")
+                        .build();
+
+        return new InMemoryUserDetailsManager(user, admin);
     }
 }
